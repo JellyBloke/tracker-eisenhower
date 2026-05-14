@@ -1,0 +1,25 @@
+{
+    "compilerOptions": {
+        "target": "ES2020",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "lib": ["ES2020", "DOM", "DOM.Iterable"],
+        "strict": true,
+        "noImplicitAny": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "allowSyntheticDefaultImports": true,
+        "useDefineForClassFields": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": ["resources/ts/*"]
+        }
+    },
+    "include": ["resources/ts/**/*.ts"],
+    "exclude": ["node_modules", "public/build"]
+}
