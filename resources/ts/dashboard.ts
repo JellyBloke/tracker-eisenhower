@@ -9,7 +9,6 @@ const QUADRANT_LABELS: Record<Quadrant, string> = {
     eliminate: 'Eliminate',
 };
 
-/** Hours within which an upcoming due date counts as urgent. Mirrors Task::URGENT_WINDOW_HOURS. */
 const URGENT_WINDOW_HOURS = 48;
 
 function quadrantFor(urgent: boolean, important: boolean): Quadrant {
@@ -19,7 +18,6 @@ function quadrantFor(urgent: boolean, important: boolean): Quadrant {
     return 'eliminate';
 }
 
-/** Mirrors Task::computeUrgent on the server so the live preview matches what gets saved. */
 function inferUrgent(dueAtIso: string | null, estimatedMinutes: number | null): boolean {
     if (!dueAtIso) return false;
     const due = new Date(dueAtIso);

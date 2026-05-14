@@ -22,7 +22,6 @@ class Task extends Model
     public const STATUS_IN_PROGRESS = 'in_progress';
     public const STATUS_COMPLETED = 'completed';
 
-    /** Tasks due within this many hours are considered urgent. */
     public const URGENT_WINDOW_HOURS = 48;
 
     protected $fillable = [
@@ -79,13 +78,6 @@ class Task extends Model
         };
     }
 
-    /**
-     * Infer urgency from the due date and (optionally) the estimated effort.
-     *
-     * Urgent when:
-     *   - the task has a due date AND it is overdue or within URGENT_WINDOW_HOURS, OR
-     *   - the estimate consumes at least half of the remaining time (tight schedule).
-     */
     public static function computeUrgent(
         DateTimeInterface|string|null $dueAt,
         ?int $estimatedMinutes = null,
