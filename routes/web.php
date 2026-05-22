@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FocusController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TagController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/dashboard');
@@ -38,5 +39,12 @@ Route::middleware('auth')->group(function () {
         Route::post('/{task}/start', [TaskController::class, 'start'])->name('start');
         Route::post('/{task}/complete', [TaskController::class, 'complete'])->name('complete');
         Route::delete('/{task}', [TaskController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('api/tags')->name('tags.')->group(function () {
+        Route::get('/', [TagController::class, 'index'])->name('index');
+        Route::post('/', [TagController::class, 'store'])->name('store');
+        Route::patch('/{tag}', [TagController::class, 'update'])->name('update');
+        Route::delete('/{tag}', [TagController::class, 'destroy'])->name('destroy');
     });
 });

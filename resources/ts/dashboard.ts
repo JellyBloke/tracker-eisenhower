@@ -1,6 +1,6 @@
 import { api, ApiError } from './api';
 import { showToast } from './toast';
-import type { CompletionResponse, Quadrant, Task } from './types';
+import type { CompletionResponse, Quadrant, Task, Tag } from './types';
 
 const QUADRANT_LABELS: Record<Quadrant, string> = {
     do: 'Do',
@@ -78,6 +78,21 @@ function renderTaskItem(task: Task): HTMLLIElement {
         ? `<span class="due">Due ${due.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`
         : '';
 
+    const tagsHtml = task.tags?.length
+    ? `
+        <div class="task-tags">
+            ${task.tags.map((tag) => `
+                <span
+                    class="task-tag"
+                    style="background-color: ${tag.color}"
+                >
+                    ${tag.name}
+                </span>
+            `).join('')}
+        </div>
+    `
+    : '';
+
     li.innerHTML = `
         <div class="task-main">
             <label class="checkbox">
@@ -86,6 +101,7 @@ function renderTaskItem(task: Task): HTMLLIElement {
             </label>
             ${dueLabel}
         </div>
+        ${tagsHtml}
         ${task.description ? '<p class="task-desc"></p>' : ''}
         <div class="task-meta">
             ${meta.map((m) => `<span>${m}</span>`).join('')}
@@ -234,6 +250,7 @@ function setupCreateForm(): void {
             estimated_minutes: formData.get('estimated_minutes')
                 ? Number(formData.get('estimated_minutes'))
                 : null,
+            tags: formData.getAll('tags[]').map(Number),
         };
 
         if (!payload.title) {
@@ -253,6 +270,105 @@ function setupCreateForm(): void {
     });
 }
 
+function setupTagModal(): void {
+    const modal = document.getElementById('tag-modal');
+    const openButton = document.getElementById('open-tag-modal');
+    const closeButton = modal?.querySelector<HTMLElement>('[data-close-tag-modal]');
+    const form = document.getElementById('tag-form') as HTMLFormElement | null;
+    const tagSelect = document.querySelector<HTMLSelectElement>('select[name="tags[]"]');
+
+    if (!modal || !openButton || !closeButton || !form || !tagSelect) {
+        return;
+    }
+
+    const openModal = (): void => {
+        modal.classList.remove('hidden');
+    };
+
+    const closeModal = (): void => {
+        modal.classList.add('hidden');
+        form.reset();
+    };
+
+    openButton.addEventListener('click', openModal);
+
+    closeButton.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+
+        const payload = {
+            name: String(formData.get('name') ?? '').trim(),
+            color: String(formData.get('color') ?? '#3B82F6'),
+        };
+
+        if (!payload.name) {
+            showToast('Tag name is required.', 'error');
+            return;
+        }
+
+        try {
+            const res = await api.post<{ tag: Tag }>('/api/tags', payload);
+
+            const option = document.createElement('option');
+
+            option.value = String(res.tag.id);
+            option.textContent = res.tag.name;
+            option.selected = true;
+
+            tagSelect.appendChild(option);
+
+            closeModal();
+
+            showToast('Tag created.', 'success');
+
+        } catch (err) {
+            showToast(formatError(err, 'Could not create tag.'), 'error');
+        }
+    });
+}
+
+function setupTagFilters(): void {
+    document.querySelectorAll<HTMLElement>('.tag-filter').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const tagId = button.dataset.tag ?? '';
+
+            document.querySelectorAll('.tag-filter')
+                .forEach((b) => b.classList.remove('active'));
+
+            button.classList.add('active');
+
+            try {
+                const query = tagId
+                    ? `/api/tasks?tag=${tagId}`
+                    : '/api/tasks';
+
+                const res = await api.get<{ tasks: Task[] }>(query);
+
+                document.querySelectorAll<HTMLUListElement>('.task-list')
+                    .forEach((list) => {
+                        list.innerHTML = '';
+                    });
+
+                res.tasks.forEach(appendTaskToQuadrant);
+
+            } catch (err) {
+                showToast(formatError(err, 'Could not filter tasks.'), 'error');
+            }
+        });
+    });
+}
+
 document.querySelectorAll<HTMLLIElement>('li.task').forEach(attachTaskHandlers);
 setupDropzones();
 setupCreateForm();
+setupTagModal();
+setupTagFilters();

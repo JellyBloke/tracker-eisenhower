@@ -21,6 +21,7 @@ export interface Task {
     priority_order: number;
     created_at: string;
     updated_at: string;
+    tags: Tag[];
 }
 
 export interface FocusSessionRecord {
@@ -59,4 +60,10 @@ export interface StatsRow {
     tasks_overdue: number;
     focus_minutes: number;
     points_earned: number;
+}
+
+export interface Tag {
+    id: number;
+    name: string;
+    color: string;
 }

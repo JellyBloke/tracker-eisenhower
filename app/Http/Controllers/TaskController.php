@@ -16,12 +16,27 @@ class TaskController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $tasks = $request->user()->tasks()
+        $request->validate([
+            'tag' => ['nullable', 'integer'],
+        ]);
+
+        $query = $request->user()->tasks()
+            ->with('tags');
+
+        if ($request->filled('tag')) {
+            $query->whereHas('tags', function ($q) use ($request) {
+                $q->where('tags.id', $request->tag);
+            });
+        }
+
+        $tasks = $query
             ->orderBy('priority_order')
             ->orderByDesc('created_at')
             ->get();
 
-        return response()->json(['tasks' => $tasks]);
+        return response()->json([
+            'tasks' => $tasks,
+        ]);
     }
 
     public function store(Request $request): JsonResponse
@@ -32,11 +47,15 @@ class TaskController extends Controller
             'is_important' => ['sometimes', 'boolean'],
             'due_at' => ['nullable', 'date'],
             'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['integer', 'exists:tags,id'],
         ]);
 
         $dueAt = $data['due_at'] ?? null;
         $estimate = $data['estimated_minutes'] ?? null;
         $important = (bool) ($data['is_important'] ?? false);
+
         $urgent = Task::computeUrgent($dueAt, $estimate);
 
         $task = $request->user()->tasks()->create([
@@ -50,7 +69,16 @@ class TaskController extends Controller
             'estimated_minutes' => $estimate,
         ]);
 
-        return response()->json(['task' => $task], 201);
+        $tagIds = collect($request->input('tags', []))
+            ->intersect(
+                $request->user()->tags()->pluck('id')
+            );
+
+        $task->tags()->sync($tagIds);
+
+        return response()->json([
+            'task' => $task->fresh()->load('tags'),
+        ], 201);
     }
 
     public function update(Request $request, Task $task): JsonResponse
@@ -64,27 +92,49 @@ class TaskController extends Controller
             'due_at' => ['nullable', 'date'],
             'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
             'priority_order' => ['sometimes', 'integer', 'min:0', 'max:1000'],
+
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['integer', 'exists:tags,id'],
         ]);
 
         $touchesUrgency = array_key_exists('due_at', $data)
             || array_key_exists('estimated_minutes', $data);
+
         $touchesImportance = array_key_exists('is_important', $data);
 
         if ($touchesUrgency || $touchesImportance) {
-            $dueAt = array_key_exists('due_at', $data) ? $data['due_at'] : $task->due_at;
+            $dueAt = array_key_exists('due_at', $data)
+                ? $data['due_at']
+                : $task->due_at;
+
             $estimate = array_key_exists('estimated_minutes', $data)
                 ? $data['estimated_minutes']
                 : $task->estimated_minutes;
-            $important = $touchesImportance ? (bool) $data['is_important'] : (bool) $task->is_important;
+
+            $important = $touchesImportance
+                ? (bool) $data['is_important']
+                : (bool) $task->is_important;
 
             $data['is_urgent'] = Task::computeUrgent($dueAt, $estimate);
             $data['is_important'] = $important;
-            $data['quadrant'] = Task::quadrantFor($data['is_urgent'], $important);
+            $data['quadrant'] = Task::quadrantFor(
+                $data['is_urgent'],
+                $important
+            );
         }
 
         $task->fill($data)->save();
 
-        return response()->json(['task' => $task->fresh()]);
+        $tagIds = collect($request->input('tags', []))
+            ->intersect(
+                $request->user()->tags()->pluck('id')
+            );
+
+        $task->tags()->sync($tagIds);
+
+        return response()->json([
+            'task' => $task->fresh()->load('tags'),
+        ]);
     }
 
     public function moveQuadrant(Request $request, Task $task): JsonResponse
@@ -96,12 +146,26 @@ class TaskController extends Controller
         ]);
 
         $quadrant = $data['quadrant'];
+
         $task->quadrant = $quadrant;
-        $task->is_urgent = in_array($quadrant, [Task::QUADRANT_DO, Task::QUADRANT_DELEGATE], true);
-        $task->is_important = in_array($quadrant, [Task::QUADRANT_DO, Task::QUADRANT_SCHEDULE], true);
+
+        $task->is_urgent = in_array(
+            $quadrant,
+            [Task::QUADRANT_DO, Task::QUADRANT_DELEGATE],
+            true
+        );
+
+        $task->is_important = in_array(
+            $quadrant,
+            [Task::QUADRANT_DO, Task::QUADRANT_SCHEDULE],
+            true
+        );
+
         $task->save();
 
-        return response()->json(['task' => $task]);
+        return response()->json([
+            'task' => $task->fresh()->load('tags'),
+        ]);
     }
 
     public function complete(Request $request, Task $task): JsonResponse
@@ -110,24 +174,33 @@ class TaskController extends Controller
 
         if ($task->status === Task::STATUS_COMPLETED) {
             return response()->json([
-                'task' => $task,
+                'task' => $task->load('tags'),
                 'points_awarded' => 0,
                 'message' => 'Already completed.',
             ]);
         }
 
         $now = Carbon::now();
+
         $task->status = Task::STATUS_COMPLETED;
         $task->completed_at = $now;
+
         if ($task->started_at !== null) {
-            $task->actual_minutes += max(0, (int) round($task->started_at->diffInMinutes($now)));
+            $task->actual_minutes += max(
+                0,
+                (int) round($task->started_at->diffInMinutes($now))
+            );
         }
+
         $task->save();
 
-        $points = $this->productivity->recordCompletion($task, $request->user());
+        $points = $this->productivity->recordCompletion(
+            $task,
+            $request->user()
+        );
 
         return response()->json([
-            'task' => $task->fresh(),
+            'task' => $task->fresh()->load('tags'),
             'points_awarded' => $points,
             'user' => $request->user()->fresh(),
         ]);
@@ -138,26 +211,37 @@ class TaskController extends Controller
         $this->authorizeOwnership($request, $task);
 
         if ($task->status === Task::STATUS_COMPLETED) {
-            return response()->json(['message' => 'Cannot start a completed task.'], 422);
+            return response()->json([
+                'message' => 'Cannot start a completed task.',
+            ], 422);
         }
 
         $task->status = Task::STATUS_IN_PROGRESS;
         $task->started_at = $task->started_at ?? Carbon::now();
+
         $task->save();
 
-        return response()->json(['task' => $task]);
+        return response()->json([
+            'task' => $task->fresh()->load('tags'),
+        ]);
     }
 
     public function destroy(Request $request, Task $task): JsonResponse
     {
         $this->authorizeOwnership($request, $task);
+
         $task->delete();
 
-        return response()->json(['deleted' => true]);
+        return response()->json([
+            'deleted' => true,
+        ]);
     }
 
     private function authorizeOwnership(Request $request, Task $task): void
     {
-        abort_unless($task->user_id === $request->user()->id, 403);
+        abort_unless(
+            $task->user_id === $request->user()->id,
+            403
+        );
     }
 }

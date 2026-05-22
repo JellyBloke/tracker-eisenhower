@@ -33,6 +33,29 @@
             </div>
             <div class="row">
                 <textarea name="description" placeholder="Notes (optional)" rows="2" maxlength="2000"></textarea>
+                <div class="tag-select-wrap">
+                    <select name="tags[]" multiple class="tag-select">
+                        @foreach ($tags as $tag)
+                            <option
+                                value="{{ $tag->id }}"
+                                style="color: {{ $tag->color }};"
+                            >
+                                {{ $tag->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        id="open-tag-modal"
+                    >
+                        + Tag
+                    </button>
+
+                    <span class="muted small">
+                        Hold Ctrl (Cmd on Mac) to select multiple tags
+                    </span>
+                </div>
             </div>
             <div class="row toggles">
                 <label class="checkbox">
@@ -42,11 +65,26 @@
                 <span class="muted small" title="Urgency is inferred from the due date and estimated time.">
                     Urgency is auto-detected from your due date.
                 </span>
-                <span class="quadrant-preview" data-preview>→ Eliminate</span>
                 <button type="submit" class="btn btn-primary">Add task</button>
             </div>
         </form>
     </section>
+
+    <div class="tag-filters">
+        <button class="tag-filter active" data-tag="">
+            All
+        </button>
+
+        @foreach ($tags as $tag)
+            <button
+                class="tag-filter"
+                data-tag="{{ $tag->id }}"
+                style="border-color: {{ $tag->color }}"
+            >
+                {{ $tag->name }}
+            </button>
+        @endforeach
+    </div>
 
     <section class="matrix" id="matrix">
         @php
@@ -83,6 +121,18 @@
                                     </span>
                                 @endif
                             </div>
+                            @if ($task->tags->isNotEmpty())
+                                <div class="task-tags">
+                                    @foreach ($task->tags as $tag)
+                                        <span
+                                            class="task-tag"
+                                            style="background-color: {{ $tag->color }}"
+                                        >
+                                            {{ $tag->name }}
+                                        </span>
+                                    @endforeach
+                                </div>
+                            @endif
                             @if ($task->description)
                                 <p class="task-desc">{{ $task->description }}</p>
                             @endif
@@ -105,6 +155,45 @@
             </div>
         @endforeach
     </section>
+
+    <div id="tag-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>Create Tag</h3>
+
+            <form id="tag-form">
+                <input
+                    type="text"
+                    name="name"
+                    placeholder="Tag name"
+                    maxlength="20"
+                    required
+                >
+
+                <input
+                    type="color"
+                    name="color"
+                    value="#3B82F6"
+                >
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn btn-primary">
+                        Create
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn"
+                        data-close-tag-modal
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
 
     <div id="toast-host" class="toast-host"></div>
 @endsection

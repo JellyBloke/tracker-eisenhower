@@ -14,8 +14,13 @@ class DashboardController extends Controller
         $user = $request->user();
 
         $tasks = $user->tasks()
+            ->with('tags')
             ->orderBy('priority_order')
             ->orderByDesc('created_at')
+            ->get();
+        
+        $tags = $user->tags()
+            ->orderBy('name')
             ->get();
 
         $grouped = [
@@ -32,6 +37,7 @@ class DashboardController extends Controller
             'user' => $user,
             'tasks' => $tasks,
             'quadrants' => $grouped,
+            'tags' => $tags,
             'todayStat' => $todayStat,
             'totalPending' => $tasks->where('status', '!=', Task::STATUS_COMPLETED)->count(),
             'totalCompleted' => $tasks->where('status', Task::STATUS_COMPLETED)->count(),
