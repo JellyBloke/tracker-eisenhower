@@ -61,12 +61,37 @@ class User extends Authenticatable
     public function awardPoints(int $points): void
     {
         $this->points += $points;
-        $this->level = max(1, (int) floor($this->points / 100) + 1);
+
+        while ($this->points >= $this->xpRequiredForLevel($this->level + 1)) {
+            $this->level++;
+        }
+
         $this->save();
+    }
+
+    public function xpRequiredForLevel(int $level): int
+    {
+        return (int) (100 * pow($level, 1.5));
+    }
+
+    public function currentLevelXp(): int
+    {
+        return $this->xpRequiredForLevel($this->level);
+    }
+
+    public function nextLevelXp(): int
+    {
+        return $this->xpRequiredForLevel($this->level + 1);
     }
 
     public function progressToNextLevel(): int
     {
-        return $this->points % 100;
+        $currentLevelXp = $this->currentLevelXp();
+        $nextLevelXp = $this->nextLevelXp();
+
+        $xpIntoLevel = $this->points - $currentLevelXp;
+        $xpRequired = $nextLevelXp - $currentLevelXp;
+
+        return (int) round(($xpIntoLevel / $xpRequired) * 100);
     }
 }

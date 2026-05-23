@@ -18,8 +18,12 @@
                 <select id="focus-task">
                     <option value="">— Standalone focus session —</option>
                     @foreach ($tasks as $task)
-                        <option value="{{ $task->id }}"
-                            @selected((string) request('task_id') === (string) $task->id)>
+                        <option
+                            value="{{ $task->id }}"
+                            data-estimate="{{ $task->estimated_minutes ?? '' }}"
+                            data-quadrant="{{ $task->quadrant }}"
+                            @selected((string) request('task_id') === (string) $task->id)
+                        >
                             [{{ ucfirst($task->quadrant) }}] {{ $task->title }}
                         </option>
                     @endforeach
@@ -28,7 +32,7 @@
 
             <label class="field">
                 <span>Duration (minutes)</span>
-                <input type="number" id="focus-minutes" value="25" min="1" max="180">
+                <input type="number" id="focus-minutes" value="{{ $selectedTask?->estimated_minutes ?? 25 }}" min="1" max="180">
             </label>
 
             <div class="presets">
@@ -42,6 +46,10 @@
         </div>
 
         <div class="focus-active hidden" id="focus-active">
+            <div class="focus-task-display">
+                <span class="focus-label">CURRENT FOCUS</span>
+                <h2 id="focus-task-title">Standalone Focus Session</h2>
+            </div>
             <div class="timer-wrap">
                 <svg viewBox="0 0 200 200" class="ring">
                     <circle cx="100" cy="100" r="90" class="ring-bg"></circle>

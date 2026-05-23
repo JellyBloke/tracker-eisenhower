@@ -41,6 +41,8 @@ class StatsController extends Controller
             'total_points' => $user->points,
             'level' => $user->level,
             'progress_to_next' => $user->progressToNextLevel(),
+            'current_level_xp' => $user->currentLevelXp(),
+            'next_level_xp' => $user->nextLevelXp(),
             'streak_days' => $user->streak_days,
             'tasks_completed' => $user->tasks()->where('status', Task::STATUS_COMPLETED)->count(),
             'tasks_pending' => $user->tasks()->where('status', '!=', Task::STATUS_COMPLETED)->count(),

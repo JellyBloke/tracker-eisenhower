@@ -30,6 +30,14 @@ class FocusController extends Controller
             ->limit(5)
             ->get();
 
+        $selectedTask = null;
+
+        if ($request->filled('task_id')) {
+            $selectedTask = $user->tasks()
+                ->where('status', '!=', Task::STATUS_COMPLETED)
+                ->find($request->integer('task_id'));
+        }
+
         return view('focus', [
             'tasks' => $tasks,
             'recentSessions' => $recent,

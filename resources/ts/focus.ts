@@ -23,9 +23,18 @@ const stopBtn = document.getElementById('focus-stop') as HTMLButtonElement | nul
 const timeDisplay = document.getElementById('time-display')!;
 const statusEl = document.getElementById('focus-status')!;
 const ring = document.getElementById('ring-progress') as unknown as SVGCircleElement | null;
+const taskTitleEl = document.getElementById('focus-task-title');
 
 let active: ActiveSession | null = null;
 let tickHandle: number | null = null;
+
+const focusMessages = [
+    'Deep work in progress.',
+    'One task at a time.',
+    'Stay locked in.',
+    'Small progress compounds.',
+    'Focus creates momentum.',
+];
 
 if (ring) {
     ring.style.strokeDasharray = String(RING_CIRCUMFERENCE);
@@ -40,9 +49,29 @@ document.querySelectorAll<HTMLButtonElement>('button[data-preset]').forEach((btn
 
 const params = new URLSearchParams(window.location.search);
 const preselect = params.get('task_id');
+
+function syncEstimatedMinutes(): void {
+    if (!taskSelect || !minutesInput) return;
+
+    const selectedOption = taskSelect.selectedOptions[0];
+    if (!selectedOption) return;
+
+    const estimate = selectedOption.dataset.estimate;
+
+    if (estimate && Number(estimate) > 0) {
+        minutesInput.value = estimate;
+    } else {
+        minutesInput.value = '25';
+    }
+}
+
 if (preselect && taskSelect) {
     taskSelect.value = preselect;
 }
+
+taskSelect?.addEventListener('change', syncEstimatedMinutes);
+
+syncEstimatedMinutes();
 
 function formatTime(secondsLeft: number): string {
     const m = Math.floor(secondsLeft / 60).toString().padStart(2, '0');
@@ -67,6 +96,11 @@ function tick(): void {
         const progress = Math.min(1, elapsed / active.plannedSeconds);
         ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - progress));
     }
+
+    const minuteIndex = Math.floor(elapsed / 60);
+    statusEl.textContent =
+        focusMessages[minuteIndex % focusMessages.length];
+
     if (remaining === 0) {
         finishSession(true);
     }
@@ -89,6 +123,10 @@ async function startSession(): Promise<void> {
     if (!minutesInput) return;
     const minutes = Math.max(1, Math.min(180, Number(minutesInput.value) || 25));
     const taskId = taskSelect && taskSelect.value ? Number(taskSelect.value) : null;
+    const quadrant =
+        taskSelect?.selectedOptions[0]?.dataset.quadrant ?? 'schedule';
+
+    document.body.dataset.focusQuadrant = quadrant;
 
     if (startBtn) startBtn.disabled = true;
     try {
@@ -96,6 +134,13 @@ async function startSession(): Promise<void> {
             task_id: taskId,
             planned_minutes: minutes,
         });
+        const selectedText =
+            taskSelect?.selectedOptions[0]?.textContent?.trim()
+            ?? 'Standalone Focus Session';
+
+        if (taskTitleEl) {
+            taskTitleEl.textContent = selectedText;
+        }
         active = {
             id: res.session.id,
             plannedSeconds: minutes * 60,
@@ -168,6 +213,7 @@ function resetUi(): void {
     timeDisplay.textContent = `${(Number(minutesInput?.value) || 25).toString().padStart(2, '0')}:00`;
     statusEl.textContent = 'Stay focused.';
     if (ring) ring.style.strokeDashoffset = String(RING_CIRCUMFERENCE);
+    delete document.body.dataset.focusQuadrant;
     if (pauseBtn) pauseBtn.textContent = 'Pause';
 }
 
