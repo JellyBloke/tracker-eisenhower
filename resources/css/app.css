@@ -241,10 +241,64 @@ h2 { font-size: 1.2rem; }
     flex-wrap: wrap;
     margin-bottom: 0.6rem;
 }
-.task-create .task-form .row input[type="text"] { flex: 2 1 200px; }
-.task-create .task-form .row input[type="datetime-local"] { flex: 1 1 180px; }
-.task-create .task-form .row input[type="number"] { flex: 0 0 110px; }
-.task-create .task-form textarea { width: 100%; }
+.task-create .task-form .row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.field-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 0;
+}
+
+.field-inline.title-field {
+    flex: 2 1 260px;
+}
+
+.field-inline.date-field {
+    flex: 1 1 220px;
+}
+
+.field-inline.time-field {
+    flex: 0 0 140px;
+}
+
+.field-inline input,
+.field-inline textarea,
+.field-inline select {
+    width: 100%;
+}
+
+.field-inline label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding-left: 0.1rem;
+}
+
+.field-inline small {
+    font-size: 0.72rem;
+    color: var(--muted);
+    opacity: 0.75;
+    padding-left: 0.1rem;
+}
+
+.task-create .task-form textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+.task-create .task-form .row label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding-left: 0.1rem;
+}
+
 .task-create .task-form .toggles { align-items: center; }
 .quadrant-preview { color: var(--muted); margin-left: auto; }
 
@@ -488,6 +542,11 @@ h2 { font-size: 1.2rem; }
 .toast-success { border-color: rgba(16, 185, 129, 0.5); }
 .toast-error { border-color: rgba(239, 68, 68, 0.5); }
 
+.toast-warning {
+    border-color: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.12);
+}
+
 .task-tags {
     display: flex;
     flex-wrap: wrap;
@@ -601,6 +660,13 @@ h2 { font-size: 1.2rem; }
     flex-direction: column;
     gap: 0.35rem;
     max-width: 320px;
+}
+
+.tag-select-wrap label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding-left: 0.1rem;
 }
 
 .tag-select {
@@ -767,4 +833,60 @@ body[data-focus-quadrant="eliminate"] .ring-progress {
 .highlight-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 1rem;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 700px;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.form-row-enhanced {
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.field-inline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+}
+
+.field-inline label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    opacity: 0.8;
+    padding-left: 0.1rem;
+}
+
+.field-inline small {
+    font-size: 0.72rem;
+    opacity: 0.65;
+    padding-left: 0.1rem;
+}
+
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.2);
+    opacity: 0.8;
 }

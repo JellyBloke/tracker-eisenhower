@@ -1,6 +1,22 @@
 import { api, ApiError } from './api';
 import { showToast } from './toast';
 import type { CompletionResponse, Quadrant, Task, Tag } from './types';
+import { initReminders } from './reminders';
+
+const editModal = $('#edit-task-modal');
+const editForm = $('#edit-task-form') as HTMLFormElement | null;
+
+const editTitle = $('#edit-title') as HTMLInputElement | null;
+const editDescription = $('#edit-description') as HTMLTextAreaElement | null;
+const editDueAt = $('#edit-due-at') as HTMLInputElement | null;
+const editEstimatedMinutes = $('#edit-estimated-minutes') as HTMLInputElement | null;
+const editImportant = $('#edit-important') as HTMLInputElement | null;
+const editTaskId = $('#edit-task-id') as HTMLInputElement | null;
+const editTags = $('#edit-tags') as HTMLSelectElement | null;
+
+const editCancelBtn = $('#edit-cancel') as HTMLButtonElement | null;
+
+
 
 const QUADRANT_LABELS: Record<Quadrant, string> = {
     do: 'Do',
@@ -10,6 +26,27 @@ const QUADRANT_LABELS: Record<Quadrant, string> = {
 };
 
 const URGENT_WINDOW_HOURS = 48;
+
+function parseLaravelDate(dateString: string): Date {
+    const normalized = dateString.replace(' ', 'T');
+
+    const [datePart, timePart] = normalized.split('T');
+
+    const [year, month, day] = datePart.split('-').map(Number);
+
+    const [hours, minutes, seconds] = (timePart || '00:00:00')
+        .split(':')
+        .map(Number);
+
+    return new Date(
+        year,
+        month - 1,
+        day,
+        hours,
+        minutes,
+        seconds || 0
+    );
+}
 
 function quadrantFor(urgent: boolean, important: boolean): Quadrant {
     if (urgent && important) return 'do';
@@ -68,14 +105,31 @@ function renderTaskItem(task: Task): HTMLLIElement {
     li.dataset.quadrant = task.quadrant;
     li.draggable = true;
 
+    li.dataset.title = task.title;
+    li.dataset.description = task.description ?? '';
+    li.dataset.dueAt = task.due_at ?? '';
+    li.dataset.estimatedMinutes = String(task.estimated_minutes ?? '');
+    li.dataset.important = String(task.is_important);
+    li.dataset.tags = JSON.stringify(task.tags?.map(t => t.id) ?? []);
+
     const meta: string[] = [];
     if (task.estimated_minutes) meta.push(`⏱ ${task.estimated_minutes}m`);
     if (task.focus_minutes) meta.push(`🎯 ${task.focus_minutes}m`);
     if (task.points_awarded) meta.push(`⭐ ${task.points_awarded}`);
 
-    const due = task.due_at ? new Date(task.due_at) : null;
+    const due = task.due_at
+    ? parseLaravelDate(task.due_at)
+    : null;
+
     const dueLabel = due
-        ? `<span class="due">Due ${due.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>`
+        ? `<span class="due">
+            Due ${due.toLocaleString([], {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}
+        </span>`
         : '';
 
     const tagsHtml = task.tags?.length
@@ -106,6 +160,9 @@ function renderTaskItem(task: Task): HTMLLIElement {
         <div class="task-meta">
             ${meta.map((m) => `<span>${m}</span>`).join('')}
             <button type="button" class="link" data-action="focus" data-task-id="${task.id}">Focus</button>
+            <button type="button" class="link" data-action="edit">
+                Edit
+            </button>
             <button type="button" class="link danger" data-action="delete">Delete</button>
         </div>
     `;
@@ -120,6 +177,66 @@ function renderTaskItem(task: Task): HTMLLIElement {
     attachTaskHandlers(li);
     return li;
 }
+
+function openEditModal(task: Task): void {
+    if (
+        !editModal ||
+        !editTaskId ||
+        !editTitle ||
+        !editDescription ||
+        !editDueAt ||
+        !editEstimatedMinutes ||
+        !editImportant ||
+        !editTags
+    ) {
+        return;
+    }
+
+    editTaskId.value = String(task.id);
+    editTitle.value = task.title;
+    editDescription.value = task.description ?? '';
+    editEstimatedMinutes.value = task.estimated_minutes
+        ? String(task.estimated_minutes)
+        : '';
+
+    editImportant.checked = task.is_important;
+
+    if (task.due_at) {
+        const due = parseLaravelDate(task.due_at);
+        const year = due.getFullYear();
+        const month = String(due.getMonth() + 1).padStart(2, '0');
+        const day = String(due.getDate()).padStart(2, '0');
+
+        const hours = String(due.getHours()).padStart(2, '0');
+        const minutes = String(due.getMinutes()).padStart(2, '0');
+
+        editDueAt.value =
+            `${year}-${month}-${day}T${hours}:${minutes}`;
+    } else {
+        editDueAt.value = '';
+    }
+
+    Array.from(editTags.options).forEach((option) => {
+        option.selected = false;
+    });
+
+    task.tags?.forEach((tag) => {
+        const option = Array.from(editTags.options).find(
+            (o) => Number(o.value) === tag.id
+        );
+
+        if (option) {
+            option.selected = true;
+        }
+    });
+
+    editModal.classList.remove('hidden');
+}
+
+function closeEditModal(): void {
+    editModal?.classList.add('hidden');
+}
+
 
 function appendTaskToQuadrant(task: Task): void {
     const list = document.querySelector<HTMLUListElement>(`[data-dropzone="${task.quadrant}"]`);
@@ -173,6 +290,18 @@ function attachTaskHandlers(li: HTMLLIElement): void {
     li.querySelector<HTMLButtonElement>('[data-action="focus"]')?.addEventListener('click', () => {
         const taskId = li.dataset.taskId ?? '';
         window.location.href = `/focus?task_id=${encodeURIComponent(taskId)}`;
+    });
+
+    li.querySelector<HTMLButtonElement>('[data-action="edit"]')
+    ?.addEventListener('click', async () => {
+        const taskId = Number(li.dataset.taskId);
+
+        try {
+            const res = await api.get<{ task: Task }>(`/api/tasks/${taskId}`);
+            openEditModal(res.task);
+        } catch (err) {
+            showToast('Could not load task.', 'error');
+        }
     });
 }
 
@@ -266,6 +395,43 @@ function setupCreateForm(): void {
             showToast('Task added.', 'success');
         } catch (err) {
             showToast(formatError(err, 'Could not add task.'), 'error');
+        }
+    });
+}
+
+function setupEditForm(): void {
+    if (!editForm || !editTaskId) return;
+
+    editForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const taskId = Number(editTaskId.value);
+
+        const selectedTags = editTags
+            ? Array.from(editTags.selectedOptions).map((o) => Number(o.value))
+            : [];
+
+        const payload = {
+            title: editTitle?.value.trim(),
+            description: editDescription?.value || null,
+            due_at: editDueAt?.value || null,
+            estimated_minutes: editEstimatedMinutes?.value
+                ? Number(editEstimatedMinutes.value)
+                : null,
+            is_important: editImportant?.checked ?? false,
+            tags: selectedTags,
+        };
+
+        try {
+            await api.patch(`/api/tasks/${taskId}`, payload);
+
+            showToast('Task updated.', 'success');
+
+            closeEditModal();
+
+            window.location.reload();
+        } catch (err) {
+            showToast(formatError(err, 'Could not update task.'), 'error');
         }
     });
 }
@@ -370,5 +536,10 @@ function setupTagFilters(): void {
 document.querySelectorAll<HTMLLIElement>('li.task').forEach(attachTaskHandlers);
 setupDropzones();
 setupCreateForm();
+setupEditForm();
 setupTagModal();
 setupTagFilters();
+
+editCancelBtn?.addEventListener('click', closeEditModal);
+
+initReminders();

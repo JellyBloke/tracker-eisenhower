@@ -46,7 +46,7 @@ class TaskController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'is_important' => ['sometimes', 'boolean'],
             'due_at' => ['nullable', 'date'],
-            'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'estimated_minutes' => ['nullable', 'integer', 'min:0', 'max:10080'],
 
             'tags' => ['nullable', 'array'],
             'tags.*' => ['integer', 'exists:tags,id'],
@@ -67,7 +67,10 @@ class TaskController extends Controller
             'status' => Task::STATUS_PENDING,
             'due_at' => $dueAt,
             'estimated_minutes' => $estimate,
+            'reminder_minutes_before' => $data['reminder_minutes_before'] ?? null,
+
         ]);
+
 
         $tagIds = collect($request->input('tags', []))
             ->intersect(
@@ -90,7 +93,7 @@ class TaskController extends Controller
             'description' => ['nullable', 'string', 'max:2000'],
             'is_important' => ['sometimes', 'boolean'],
             'due_at' => ['nullable', 'date'],
-            'estimated_minutes' => ['nullable', 'integer', 'min:1', 'max:1440'],
+            'estimated_minutes' => ['nullable', 'integer', 'min:0', 'max:10080'],
             'priority_order' => ['sometimes', 'integer', 'min:0', 'max:1000'],
 
             'tags' => ['nullable', 'array'],
@@ -134,6 +137,15 @@ class TaskController extends Controller
 
         return response()->json([
             'task' => $task->fresh()->load('tags'),
+        ]);
+    }
+
+    public function show(Request $request, Task $task): JsonResponse
+    {
+        $this->authorizeOwnership($request, $task);
+
+        return response()->json([
+            'task' => $task->load('tags'),
         ]);
     }
 

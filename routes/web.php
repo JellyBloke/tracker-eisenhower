@@ -31,8 +31,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/stats', [StatsController::class, 'index'])->name('stats');
     Route::get('/api/stats/summary', [StatsController::class, 'summary'])->name('stats.summary');
 
+    Route::patch('/tasks/{task}', [TaskController::class, 'update']);
+
     Route::prefix('api/tasks')->name('tasks.')->group(function () {
         Route::get('/', [TaskController::class, 'index'])->name('index');
+        Route::get('/{task}', [TaskController::class, 'show'])->name('show');
         Route::post('/', [TaskController::class, 'store'])->name('store');
         Route::patch('/{task}', [TaskController::class, 'update'])->name('update');
         Route::patch('/{task}/quadrant', [TaskController::class, 'moveQuadrant'])->name('quadrant');

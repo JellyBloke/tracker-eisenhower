@@ -26,14 +26,66 @@
 
     <section class="task-create card">
         <form id="task-form" class="task-form">
-            <div class="row">
-                <input type="text" name="title" placeholder="What needs doing?" required maxlength="255">
-                <input type="datetime-local" name="due_at" title="Due date (optional)">
-                <input type="number" name="estimated_minutes" min="1" max="1440" placeholder="Est. min">
+            <div class="row form-row-enhanced">
+                <div class="field-inline">
+                    <label for="task-title">
+                        Task
+                    </label>
+
+                    <input
+                        id="task-title"
+                        type="text"
+                        name="title"
+                        placeholder="What needs doing?"
+                        required
+                        maxlength="255"
+                    >
+
+                    <small>
+                        Clear action-based titles work best
+                    </small>
+                </div>
+
+                <div class="field-inline">
+                    <label for="task-due">
+                        Due date
+                    </label>
+
+                    <input
+                        id="task-due"
+                        type="datetime-local"
+                        name="due_at"
+                    >
+
+                    <small>
+                        Optional deadline
+                    </small>
+                </div>
+
+                <div class="field-inline">
+                    <label for="task-estimate">
+                        Duration
+                    </label>
+
+                    <input
+                        id="task-estimate"
+                        type="number"
+                        name="estimated_minutes"
+                        min="1"
+                        max="1440"
+                        placeholder="30"
+                    >
+
+                    <small>
+                        Estimated minutes
+                    </small>
+                </div>
             </div>
             <div class="row">
+                <label for="description">Notes</label>
                 <textarea name="description" placeholder="Notes (optional)" rows="2" maxlength="2000"></textarea>
                 <div class="tag-select-wrap">
+                    <label for="tag-select-wrap">Add Tags</label>
                     <select name="tags[]" multiple class="tag-select">
                         @foreach ($tags as $tag)
                             <option
@@ -147,6 +199,10 @@
                                     <span title="Points earned">⭐ {{ $task->points_awarded }}</span>
                                 @endif
                                 <button type="button" class="link" data-action="focus" data-task-id="{{ $task->id }}">Focus</button>
+
+                                <button type="button" class="link" data-action="edit">
+                                    Edit
+                                </button>
                                 <button type="button" class="link danger" data-action="delete">Delete</button>
                             </div>
                         </li>
@@ -192,7 +248,104 @@
         </div>
     </div>
 
+    <div id="edit-task-modal" class="modal hidden">
+        <div class="modal-content card">
+            <h2>Edit Task</h2>
 
+            <form id="edit-task-form" class="task-form">
+                <input type="hidden" id="edit-task-id">
+
+                <div class="row task-input-grid">
+                    <div class="input-group">
+                        <label for="edit-title">Task title</label>
+
+                        <input
+                            type="text"
+                            id="edit-title"
+                            required
+                            maxlength="255"
+                        >
+
+                        <span class="input-hint">
+                            Rename or clarify the task
+                        </span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="edit-due-at">
+                            Due date & time
+                        </label>
+
+                        <input
+                            type="datetime-local"
+                            id="edit-due-at"
+                        >
+
+                        <span class="input-hint">
+                            Optional deadline
+                        </span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="edit-estimated-minutes">
+                            Estimated duration
+                        </label>
+
+                        <input
+                            type="number"
+                            id="edit-estimated-minutes"
+                            min="1"
+                            max="1440"
+                            placeholder="30"
+                        >
+
+                        <span class="input-hint">
+                            Minutes needed to finish
+                        </span>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <textarea
+                        id="edit-description"
+                        rows="2"
+                        maxlength="2000"
+                    ></textarea>
+                </div>
+
+                <div class="row">
+                    <select id="edit-tags" multiple class="tag-select">
+                        @foreach ($tags as $tag)
+                            <option value="{{ $tag->id }}">
+                                {{ $tag->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="row toggles">
+                    <label class="checkbox">
+                        <input type="checkbox" id="edit-important">
+                        <span>Important</span>
+                    </label>
+
+                    <div class="modal-actions">
+                        <button type="submit" class="btn btn-primary">
+                            Save Changes
+                        </button>
+
+                        <button
+                            type="button"
+                            id="edit-cancel"
+                            class="btn btn-ghost"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
 
     <div id="toast-host" class="toast-host"></div>
