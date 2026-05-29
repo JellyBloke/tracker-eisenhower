@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -131,4 +132,12 @@ class Task extends Model
 
         return $this->completed_at->lessThanOrEqualTo($this->due_at);
     }
+
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return Carbon::instance($date)
+            ->timezone('Asia/Jakarta')
+            ->format('Y-m-d H:i:s');
+    }
+
 }
