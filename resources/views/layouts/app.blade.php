@@ -15,6 +15,7 @@
                 <a href="{{ route('dashboard') }}">{{ config('app.name') }}</a>
             </div>
             <ul class="nav-links">
+                <li><a href="{{ route('today') }}" class="@if(request()->routeIs('today')) active @endif">Dashboard</a></li>
                 <li><a href="{{ route('dashboard') }}" class="@if(request()->routeIs('dashboard')) active @endif">Matrix</a></li>
                 <li><a href="{{ route('focus') }}" class="@if(request()->routeIs('focus')) active @endif">Focus</a></li>
                 <li><a href="{{ route('stats') }}" class="@if(request()->routeIs('stats')) active @endif">Stats</a></li>

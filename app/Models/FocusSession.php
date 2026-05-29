@@ -20,6 +20,7 @@ class FocusSession extends Model
         'completed',
         'interrupted',
         'notes',
+        'duration_minutes',
     ];
 
     protected function casts(): array

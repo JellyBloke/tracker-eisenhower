@@ -7,9 +7,10 @@ use App\Http\Controllers\FocusController;
 use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TagController;
+use App\Http\Controllers\TodayController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/dashboard');
+Route::redirect('/', '/today');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
@@ -32,6 +33,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/stats/summary', [StatsController::class, 'summary'])->name('stats.summary');
 
     Route::patch('/tasks/{task}', [TaskController::class, 'update']);
+
+    Route::get('/today', [TodayController::class, 'index'])->name('today');
+
 
     Route::prefix('api/tasks')->name('tasks.')->group(function () {
         Route::get('/', [TaskController::class, 'index'])->name('index');
