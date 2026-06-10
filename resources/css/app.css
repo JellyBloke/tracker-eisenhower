@@ -909,6 +909,114 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     margin-top: 0.5rem;
 }
 
+.upcoming-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(280px, 1fr)
+    );
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.upcoming-card {
+    background: var(--bg-soft);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 1rem;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 0.75rem;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.upcoming-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 8px 20px rgba(0,0,0,0.25);
+}
+
+.upcoming-card-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: flex-start;
+
+    gap: 0.75rem;
+}
+
+.upcoming-card-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.3;
+}
+
+.upcoming-desc {
+    margin: 0;
+
+    color: var(--muted);
+
+    font-size: 0.9rem;
+
+    line-height: 1.4;
+}
+
+.upcoming-meta {
+    display: flex;
+
+    justify-content: space-between;
+
+    gap: 0.5rem;
+
+    margin-top: auto;
+
+    color: var(--muted);
+
+    font-size: 0.8rem;
+}
+
+.quadrant-badge {
+    padding: 0.25rem 0.6rem;
+
+    border-radius: 999px;
+
+    font-size: 0.72rem;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+.quadrant-do {
+    background: rgba(239,68,68,.2);
+    color: var(--do);
+}
+
+.quadrant-schedule {
+    background: rgba(59,130,246,.2);
+    color: var(--schedule);
+}
+
+.quadrant-delegate {
+    background: rgba(245,158,11,.2);
+    color: var(--delegate);
+}
+
+.quadrant-eliminate {
+    background: rgba(107,114,128,.2);
+    color: var(--eliminate);
+}
+
 .timeline {
     display: flex;
     flex-direction: column;
@@ -938,4 +1046,193 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     justify-content: space-between;
     padding: 0.75rem 0;
     border-bottom: 1px solid var(--border);
+}
+
+.calendar-grid {
+    display: grid;
+
+    grid-template-columns: repeat(7, 1fr);
+
+    gap: 0.5rem;
+}   
+
+.calendar-header {
+    text-align: center;
+
+    font-weight: 600;
+
+    padding: 0.75rem;
+
+    color: var(--muted);
+}
+
+.calendar-cell {
+    min-height: 140px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    padding: 0.5rem;
+}
+
+.calendar-cell-header {
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    margin-bottom: .5rem;
+}
+
+.calendar-cell.today {
+    border: 2px solid var(--primary);
+
+    box-shadow:
+        0 0 0 1px rgba(99,102,241,0.4),
+        0 0 16px rgba(99,102,241,0.2);
+}
+
+.calendar-cell.today .calendar-date {
+    color: var(--primary-hover);
+    font-weight: 700;
+}
+
+.calendar-cell.empty {
+    background: transparent;
+    border: none;
+}
+
+.calendar-date {
+    font-weight: 700;
+
+    margin-bottom: 0.5rem;
+}
+
+.calendar-task {
+    font-size: 0.8rem;
+
+    padding: 0.35rem 0.5rem;
+
+    margin-bottom: 0.3rem;
+
+    border-radius: 6px;
+
+    color: white;
+
+    overflow: hidden;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+
+    cursor: pointer;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: .5rem;
+}
+
+.calendar-task:hover {
+    transform: translateY(-1px);
+
+    opacity: .95;
+}
+
+.calendar-task-title {
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.calendar-warning {
+    font-size: .75rem;
+}
+
+.calendar-overdue {
+    color: #ff7b7b;
+
+    font-size: .75rem;
+}
+
+.calendar-empty {
+    opacity: .3;
+
+    text-align: center;
+
+    margin-top: 1rem;
+}
+
+.calendar-task-count {
+    background: var(--primary);
+
+    color: white;
+
+    font-size: .7rem;
+
+    font-weight: 700;
+
+    padding: .15rem .45rem;
+
+    border-radius: 999px;
+}
+
+.calendar-task.quadrant-do {
+    background: var(--do);
+}
+
+.calendar-task.quadrant-schedule {
+    background: var(--schedule);
+}
+
+.calendar-task.quadrant-delegate {
+    background: var(--delegate);
+}
+
+.calendar-task.quadrant-eliminate {
+    background: var(--eliminate);
+}
+
+.calendar-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.calendar-nav-buttons {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.calendar-month {
+    margin: 0;
+
+    font-size: 1.4rem;
+    font-weight: 700;
+
+    letter-spacing: 0.02em;
+}
+
+#tutorial-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+#tutorial-modal.hidden {
+    display: none;
 }

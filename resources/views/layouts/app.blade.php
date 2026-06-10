@@ -8,6 +8,22 @@
     @vite(['resources/css/app.css', 'resources/ts/app.ts'])
     @stack('head')
 </head>
+
+<div id="tutorial-modal" class="modal hidden">
+    <div class="modal-content card">
+
+        <h2>Welcome to Eisenhower Tracker</h2>
+
+        <p id="tutorial-text"></p>
+
+        <div class="modal-actions">
+            <button id="tutorial-next" class="btn btn-primary">Next</button>
+            <button id="tutorial-skip" class="btn">Skip</button>
+        </div>
+
+    </div>
+</div>
+
 <body class="app-body">
     @auth
         <nav class="topbar">
@@ -18,6 +34,7 @@
                 <li><a href="{{ route('today') }}" class="@if(request()->routeIs('today')) active @endif">Dashboard</a></li>
                 <li><a href="{{ route('dashboard') }}" class="@if(request()->routeIs('dashboard')) active @endif">Matrix</a></li>
                 <li><a href="{{ route('focus') }}" class="@if(request()->routeIs('focus')) active @endif">Focus</a></li>
+                <li><a href="{{ route('calendar') }}" class="{{ request()->routeIs('calendar') ? 'active' : '' }}">Calendar</a></li>
                 <li><a href="{{ route('stats') }}" class="@if(request()->routeIs('stats')) active @endif">Stats</a></li>
             </ul>
             <div class="user-panel">

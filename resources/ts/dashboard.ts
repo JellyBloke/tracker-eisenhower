@@ -3,6 +3,8 @@ import { showToast } from './toast';
 import type { CompletionResponse, Quadrant, Task, Tag } from './types';
 import { initReminders } from './reminders';
 
+const HAS_SEEN_TUTORIAL = 'tutorial_seen';
+
 const editModal = $('#edit-task-modal');
 const editForm = $('#edit-task-form') as HTMLFormElement | null;
 
@@ -47,6 +49,7 @@ function parseLaravelDate(dateString: string): Date {
         seconds || 0
     );
 }
+
 
 function quadrantFor(urgent: boolean, important: boolean): Quadrant {
     if (urgent && important) return 'do';
@@ -533,6 +536,55 @@ function setupTagFilters(): void {
     });
 }
 
+const tutorialSteps = [
+    "This app helps you organize tasks using the Eisenhower Matrix.",
+    "Create tasks with deadlines, importance, and estimates.",
+    "Tasks are automatically sorted into 4 quadrants based on urgency and importance.",
+    "Use Focus Mode to work on one task at a time and earn points.",
+    "Check the Calendar for upcoming deadlines."
+];
+
+let tutorialIndex = 0;
+
+const tutorialModal = document.getElementById('tutorial-modal');
+const tutorialText = document.getElementById('tutorial-text');
+const tutorialNext = document.getElementById('tutorial-next');
+const tutorialSkip = document.getElementById('tutorial-skip');
+
+function shouldShowTutorial(): boolean {
+    return !localStorage.getItem(HAS_SEEN_TUTORIAL);
+}
+
+function showTutorialStep(): void {
+    if (!tutorialText) return;
+    tutorialText.textContent = tutorialSteps[tutorialIndex];
+}
+
+function openTutorial(): void {
+    tutorialModal?.classList.remove('hidden');
+    tutorialIndex = 0;
+    showTutorialStep();
+}
+
+function closeTutorial(): void {
+    tutorialModal?.classList.add('hidden');
+    localStorage.setItem(HAS_SEEN_TUTORIAL, '1');
+}
+
+tutorialNext?.addEventListener('click', () => {
+    tutorialIndex++;
+
+    if (tutorialIndex >= tutorialSteps.length) {
+        closeTutorial();
+        return;
+    }
+
+    showTutorialStep();
+});
+
+tutorialSkip?.addEventListener('click', closeTutorial);
+
+
 document.querySelectorAll<HTMLLIElement>('li.task').forEach(attachTaskHandlers);
 setupDropzones();
 setupCreateForm();
@@ -543,3 +595,8 @@ setupTagFilters();
 editCancelBtn?.addEventListener('click', closeEditModal);
 
 initReminders();
+
+
+if (shouldShowTutorial()) {
+    openTutorial();
+}

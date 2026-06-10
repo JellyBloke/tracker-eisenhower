@@ -8,6 +8,7 @@ use App\Http\Controllers\StatsController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\TodayController;
+use App\Http\Controllers\CalendarController;
 use Illuminate\Support\Facades\Route;
 
 Route::redirect('/', '/today');
@@ -35,6 +36,9 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tasks/{task}', [TaskController::class, 'update']);
 
     Route::get('/today', [TodayController::class, 'index'])->name('today');
+
+    Route::get('/calendar', [CalendarController::class, 'index'])
+        ->name('calendar');
 
 
     Route::prefix('api/tasks')->name('tasks.')->group(function () {

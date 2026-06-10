@@ -82,20 +82,62 @@
     <section class="card">
         <h2>Upcoming</h2>
 
-        @forelse ($upcomingTasks as $task)
-            <div class="upcoming-item">
-                <strong>{{ $task->title }}</strong>
+        @if ($upcomingTasks->isNotEmpty())
 
-                <span class="muted">
-                    {{ $task->due_at?->format('M d, H:i') }}
-                </span>
+            <div class="upcoming-grid">
+
+                @foreach ($upcomingTasks as $task)
+
+                    <div class="upcoming-card">
+
+                        <div class="upcoming-card-header">
+
+                            <h3>{{ $task->title }}</h3>
+
+                            <span
+                                class="quadrant-badge quadrant-{{ $task->quadrant }}"
+                            >
+                                {{ ucfirst($task->quadrant) }}
+                            </span>
+
+                        </div>
+
+                        @if ($task->description)
+                            <p class="upcoming-desc">
+                                {{ Str::limit($task->description, 80) }}
+                            </p>
+                        @endif
+
+                        <div class="upcoming-meta">
+
+                            @if ($task->due_at)
+                                <span>
+                                    ⏰ {{ $task->due_at->format('M d, H:i') }}
+                                </span>
+                            @endif
+
+                            @if ($task->estimated_minutes)
+                                <span>
+                                    ⏱ {{ $task->estimated_minutes }}m
+                                </span>
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                @endforeach
+
             </div>
-        @empty
+
+        @else
+
             <p class="muted">
                 Nothing upcoming.
             </p>
-        @endforelse
-    </section>
+
+        @endif
+    </section>  
 
 </div>
 
